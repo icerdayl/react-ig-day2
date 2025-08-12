@@ -3,19 +3,24 @@ import api from "./api/info"
 function Post(){
     const [info, setInfo] = useState([])
 
-    useEffect(() => {
-        const fetchPost = async () => {
-            try{
-                const response = await api.get('/info')
-                setInfo(response.data)
-            } catch (err){
-                if(err.response){
-                    console.log("error")
-                }
+
+    const fetchPost = async () => {
+        try{
+            const response = await api.get('/info')
+            setInfo(response.data)
+        } catch (err){
+            if(err.response){
+                console.log("error")
+            } else {
+                console.log(`Error: ${err.message}`)
             }
         }
+    }
+
+    useEffect (() => {
         fetchPost()
-    }, [])
+    },[])
+ 
     
     function renderPost(){
         
@@ -26,7 +31,7 @@ function Post(){
                     className="font-bold text-3xl mt-5">
                         Instagram</h1>
                     <div className="flex mt-[20px] gap-[5px]">
-                        <button id="add-btn" onClick={PopUp} 
+                        <button id="add-btn"onClick={PopUp}
                         className="h-10 w-20 font-xl rounded-full text-xl font-bold text-white bg-gradient-to-b from-yellow-500  via-pink-600  to-indigo-800 cursor-pointer hover:border-black border-2 ">
                             +</button>
                         <img src="https://thehowler.org/wp-content/uploads/2018/01/roll-safe-meme-1.jpg" alt="" 
@@ -49,7 +54,7 @@ function Post(){
                     <input type="text" id="profile-url" className="border-black border-solid border-3 pr-68 rounded-sm mb-5 bg-white outline-none"/>
                     <p className="font-bold">Address</p>
                     <input type="text" id="address" className="border-black border-solid border-3 pr-68 rounded-sm mb-5 bg-white outline-none"/><br/>
-                    <button id="submit" onClick={addPosts} className="text-black rounded-sm font-bold bg-white border-black border-2  hover:bg-black hover:text-white cursor-pointer transition ease-linear duration-500 px-2">SUBMIT</button>
+                    { <button id="submit" onClick={addPosts} className="text-black rounded-sm font-bold bg-white border-black border-2  hover:bg-black hover:text-white cursor-pointer transition ease-linear duration-500 px-2">SUBMIT</button> }
                 </div>
 
                 <div className=" ml-[450px] mr-[500px] w-[500px] " >
@@ -60,7 +65,7 @@ function Post(){
                                     <img className="w-[40px] h-[40px] rounded-[50%] mt-[5px]"src={inf.icon} alt="Profile" />
                                     <p><b>{inf.name}</b><br/>{inf.address}</p>
                                 </div>
-                                <button className="bg-red-500 border-none h-10 px-6 justify-center text-base font-bold cursor pointer rounded-[5px] text-white hover:bg-red-800 transition ease-linear duration-500 cursor-pointer" onClick={() => deleteInfo(index)}>Delete</button>
+                                <button className="bg-red-500 border-none h-10 px-6 justify-center text-base font-bold cursor pointer rounded-[5px] text-white hover:bg-red-800 transition ease-linear duration-500 cursor-pointer" onClick={deleteInfo}>Delete</button>
                             </div>
                             <div className=" ">
                                 <img src={inf.img} id="img" className="max-w-[500px] rounded-xl w-full h-full" alt="Post Image"/>
@@ -89,9 +94,9 @@ function Post(){
         
     }
 
-    function addPosts(){
-
-        let addPost={
+    const addPosts = async () => {
+        const addPost={
+            id: info.length + 1,
             name: document.getElementById("username-url").value,
             address: document.getElementById("address").value,
             icon: document.getElementById("profile-url").value,
@@ -101,14 +106,33 @@ function Post(){
                 comment: "Ugh"
             }
         }
-        renderPost()    
-        setInfo(info => [addPost, ...info])
-        document.getElementById("username-url").value=""
-        document.getElementById("address").value=""
-        document.getElementById("profile-url").value=""
-        document.getElementById("img-url").value=""
-        document.getElementById("popup").style.display = "none";
-        document.getElementById("popup-bg").style.display = "none";
+
+        
+        try {
+            const response = await api.post('/info', addPost)
+            const allPost = [response.data, ...info]    
+            setInfo(allPost)
+            document.getElementById("username-url").value=""
+            document.getElementById("address").value=""
+            document.getElementById("profile-url").value=""
+            document.getElementById("img-url").value=""
+            document.getElementById("popup").style.display = "none";
+            document.getElementById("popup-bg").style.display = "none";
+        } catch (err){
+            console.log("ERROR")
+        }
+        renderPost()
+    }
+
+    const deleteInfo = async (id) => {
+        try {
+            await api.delete(`/info/${id}`)
+            const filteredArray = info.filter(i => i.id !== id)
+            setInfo(filteredArray)
+        } catch (err){
+            console.log("ERROR")
+        }
+        renderPost()
     }
 
     return renderPost();
@@ -130,11 +154,7 @@ function Post(){
         })
     }
 
-    function deleteInfo(index){
-        setInfo(info.filter((_,i)=> i !== index))
-        confirm("Are you sure you want to delete this post?")
-        renderPost()
-    }
+    
 
 }
 
