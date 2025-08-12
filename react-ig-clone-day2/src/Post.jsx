@@ -2,29 +2,46 @@ import { useState, useEffect} from "react"
 import api from "./api/info"
 function Post(){
     const [info, setInfo] = useState([])
-
-
-    const fetchPost = async () => {
-        try{
-            const response = await api.get('/info')
-            setInfo(response.data)
-        } catch (err){
-            if(err.response){
-                console.log("error")
-            } else {
-                console.log(`Error: ${err.message}`)
-            }
-        }
-    }
+    const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState()
 
     useEffect (() => {
+        const fetchPost = async () => {
+            setIsLoading(true)
+            try{
+                const response = await api.get('/info')
+                setInfo(response.data)
+                
+            } catch (err){
+                setError(err)
+                console.log("ERROR")
+            } finally {
+                setIsLoading(false)
+            }
+        }
         fetchPost()
+        
     },[])
- 
     
+    if (isLoading){
+        return (
+            <div className="animate-pulse text-center text-7xl mt-50 mb-50">Loading...</div>
+        )
+    }
+
+    if(error){
+        return(
+            <div className="animate-pulse bg-cover text-red-600 text-5xl font-bold text-center mt-50 mb-50">ERROR! <br/> Something went wrong. Please try again</div>
+        )
+    }
+
+   
+
     function renderPost(){
         
         return(
+            
+            <>
             <div className="flex-col justify-center align-center text-center flex-1 font-sans">
                 <div className="flex gap-[300px] max-w-[500px] ml-110 mb-5 w-[500px]">
                     <h1 
@@ -65,7 +82,7 @@ function Post(){
                                     <img className="w-[40px] h-[40px] rounded-[50%] mt-[5px]"src={inf.icon} alt="Profile" />
                                     <p><b>{inf.name}</b><br/>{inf.address}</p>
                                 </div>
-                                <button className="bg-red-500 border-none h-10 px-6 justify-center text-base font-bold cursor pointer rounded-[5px] text-white hover:bg-red-800 transition ease-linear duration-500 cursor-pointer" onClick={deleteInfo}>Delete</button>
+                                <button className="bg-red-500 border-none h-10 px-6 justify-center text-base font-bold cursor pointer rounded-[5px] text-white hover:bg-red-800 transition ease-linear duration-500 cursor-pointer" onClick={() => deleteInfo(inf.id)}>Delete</button>
                             </div>
                             <div className=" ">
                                 <img src={inf.img} id="img" className="max-w-[500px] rounded-xl w-full h-full" alt="Post Image"/>
@@ -89,14 +106,17 @@ function Post(){
                     )}
                 </div>
             </div>
+            </>
+            
         )
         
         
     }
+    
 
     const addPosts = async () => {
         const addPost={
-            id: info.length + 1,
+            id: String(info.length + 1),
             name: document.getElementById("username-url").value,
             address: document.getElementById("address").value,
             icon: document.getElementById("profile-url").value,
@@ -119,20 +139,20 @@ function Post(){
             document.getElementById("popup").style.display = "none";
             document.getElementById("popup-bg").style.display = "none";
         } catch (err){
-            console.log("ERROR")
+            setError(err)
         }
         renderPost()
     }
 
     const deleteInfo = async (id) => {
         try {
-            await api.delete(`/info/${id}`)
-            const filteredArray = info.filter(i => i.id !== id)
+            await api.delete(`info/${id}`)
+            const filteredArray = info.filter(inf => inf.id !== id)
             setInfo(filteredArray)
         } catch (err){
-            console.log("ERROR")
+            setError(err)
         }
-        renderPost()
+        
     }
 
     return renderPost();
